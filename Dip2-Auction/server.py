@@ -1,6 +1,13 @@
 import socket
 import subprocess
 import os
+import json
+
+import pymongo
+
+connection =pymongo.MongoClient("localhost",27017)
+database =connection["ncc_dip2"]
+col =database["user_info"]
 
 
 class TCPserver():
@@ -26,24 +33,31 @@ class TCPserver():
         with client_socket as sock:
             from_client = sock.recv(1024)
             received_data = from_client.decode("utf-8")
-            # print("Received Data From Client:", received_data)
 
-            print("Running Command : ", received_data)
+            #     output = subprocess.getoutput("dir")
+            #     # result = output.stdout.decode()
+            #
+            #     # return_valued = os.system(received_data)
 
-            try:
-                output = subprocess.getoutput("dir")
-                # result = output.stdout.decode()
 
-                # return_valued = os.system(received_data)
-                print("*****************\n", output)
-                print("********************")
-            except Exception as err:
-                print(err)
 
-            # self.toSave.update(received_data)
-            message = "server got it:>" + received_data
-            to_send = bytes(message, 'utf-8')
-            sock.send(to_send)
+            if received_data=="gad":
+                self.get_all_data(sock)
+
+
+    def get_all_data(self,sock):
+        data:dict ={}
+        id=0
+        for i in col.find({},{'_id':0}):
+            id = len(data)
+            dataform={"name":i["name"],"email":i["email"]}
+            data.update({id:dataform})
+
+        str_data =json.dumps(data)
+
+        str_data = bytes(str_data,'utf-8')
+        sock.send(str_data)
+
 
 
 if __name__ == '__main__':
